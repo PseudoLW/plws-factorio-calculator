@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "preact": "^10.25.2",
+    "yaml": "^2.6.1"
+  },
+  "scripts": {
+    "start": "bun build ./src/main.ts --outdir ./dist --watch",
+    "data": "echo \"import { parse } from 'yaml'; Bun.write('src/data/data.json', JSON.stringify(parse(await Bun.file('data.yml').text())));\" | bun run -"
+  }
+}
