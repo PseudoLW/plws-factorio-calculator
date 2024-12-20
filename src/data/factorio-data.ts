@@ -1,104 +1,99 @@
 import rawData from './data.json';
 
-class EnumTracker {
-    private map = new Map<string, number>();
-    add(item: string) {
-        if (!this.map.has(item)) this.map.set(item, this.map.size);
-    }
-    get(item: string) {
-        return this.map.get(item);
-    }
-    getReverseMapping() {
-        const entries = new Array<string>(this.map.size);
-        for (const [recipe, id] of this.map) {
-            entries[id] = recipe;
-        }
-        return entries;
-    }
-    getMapping() {
-        return this.map as Map<string, number>;
-    }
+function createInverseMapping<T extends string | number>(mapping: T[]) {
+    return Object.fromEntries(mapping.map((entry, index) => [entry, index])) as Record<T, number>;
 }
+export type ItemId = number;
+export type MachineId = number;
+export type RecipeId = number;
+
+type Energy = {
+    type: 'burner'; cost: number;
+} | {
+    type: 'electric'; activeCost: number; drain: number;
+} | {
+    type: 'food'; rate: number; item: ItemId;
+};
+
+type FactorioData = {
+    recipes: {
+        name: string;
+        ingredients: { item: ItemId, amount: number; }[];
+        products: { item: ItemId, amount: number; }[];
+        machines: MachineId[];
+        time: number;
+        canTakeProductivityModules: boolean; // All false for now
+    }[];
+    items: {
+        name: string;
+        recipesProducingThis: RecipeId[];
+        recipesConsumingThis: RecipeId[];
+    }[];
+    machines: {
+        name: string;
+        speed: { base: number; perQuality: number; };
+        energy: Energy;
+        moduleSlots: number;
+    }[];
+    nameToIds: {
+        items: Record<string, ItemId>;
+        machines: Record<string, MachineId>;
+        recipes: Record<string, RecipeId>;
+    };
+};
+
+type RawRecipeData = ((typeof rawData.recipes)[number] & { name?: string; });
 
 export function initializeData() {
-    const itemIds = new EnumTracker();
-    const categoryIds = new EnumTracker();
-    for (const { ingredients, products, category } of rawData.recipes) {
-        for (const { item } of ingredients) {
-            itemIds.add(item);
-        }
-        for (const { item } of products) {
-            itemIds.add(item);
-        }
-        for (const cat of category) {
-            categoryIds.add(cat);
-        }
-    }
-    for (const { category } of rawData.factories) {
-        for (const cat of category) {
-            categoryIds.add(cat);
-        }
-    }
-
-    const itemNames = itemIds.getReverseMapping();
-    const categoryNames = categoryIds.getReverseMapping();
-    const itemIdMap = itemIds.getMapping();
-    const possibleCrafts = new Map<number, Set<number>>(
-        [...itemIdMap.values()].map((id) => [id, new Set<number>()])
+    const itemNames = rawData.recipes.flatMap(({ ingredients, products }) => [
+        ...ingredients.map(({ item }) => item),
+        ...products.map(({ item }) => item)
+    ]);
+    const itemIds = createInverseMapping(itemNames);
+    const categories = rawData.factories.flatMap(({ category }) => category);
+    const machineIds = createInverseMapping(rawData.factories.map(({ name }) => name));
+    const machinesPerCategory = Object.fromEntries(
+        categories.map(category => [category, rawData.factories
+            .filter(({ category: cat }) => cat.includes(category))
+            .map(({ name }) => machineIds[name])
+        ])
     );
-    const recipeData: {
-        ingredients: { itemId: number, amount: number; }[];
-        products: { itemId: number, amount: number; }[];
-        categories: number[];
-        time: number;
-        name: string;
-    }[] = [];
-    type RawRecipeData = ((typeof rawData.recipes)[number] & { name?: string; });
-    (rawData.recipes as RawRecipeData[]).forEach(({ ingredients, products, category, time, name }, index) => {
-        recipeData.push({
-            ingredients: ingredients.map(({ item, amount }) => ({ itemId: itemIds.get(item)!, amount })),
-            products: products.map(({ item, amount }) => ({ itemId: itemIds.get(item)!, amount })),
-            categories: category.map(category => categoryIds.get(category)!),
-            time,
-            name: name ?? products[0].item
-        });
-        for (const { item } of products) {
-            possibleCrafts.get(itemIdMap.get(item)!)!.add(index);
-        }
-    });
 
-    type Energy = {
-        type: 'burner', cost: number;
-    } | {
-        type: 'electric', activeCost: number, drain: number;
-    };
-    const machineData: {
-        category: Set<number>,
-        productivity: number,
-        energy: Energy,
-        speed: { base: number, perQuality: number; };
-        name: string;
-    }[] = [];
-    for (const { name, category, productivity = 0, energy, speed } of rawData.factories) {
-        machineData.push({
-            category: new Set(category.map(cat => categoryIds.get(cat)!)),
-            productivity,
-            energy: energy as Energy,
-            speed, name
-        });
-    }
+    const recipes = (rawData.recipes as RawRecipeData[]).map(({ ingredients, products, time, name, category: categories }, index) => ({
+        name: name ?? products[0].item,
+        ingredients: ingredients.map(({ item, amount }) => ({ item: itemIds[item], amount })),
+        products: products.map(({ item, amount }) => ({ item: itemIds[item], amount })),
+        machines: categories.flatMap(category => machinesPerCategory[category]),
+        time,
+        canTakeProductivityModules: false
+    }));
+    const items = itemNames.map((name, index) => ({
+        name,
+        recipesProducingThis: recipes
+            .filter(({ products }) => products.some(({ item }) => item === index))
+            .map((_, index) => index),
+        recipesConsumingThis: recipes
+            .filter(({ ingredients }) => ingredients.some(({ item }) => item === index))
+            .map((_, index) => index)
+    }));
 
-    const out = {
-        recipes: recipeData,
-        categoryNames,
-        machines: machineData,
-        itemIds: itemIds.getMapping(), itemNames,
-        possibleCrafts
+    const machines = rawData.factories.map(({ name, speed, energy, moduleSlots }) => ({
+        name,
+        speed,
+        energy,
+        moduleSlots
+    }));
+
+    const nameToIds = {
+        items: itemIds,
+        machines: Object.fromEntries(machines.map(({ name }, index) => [name, index])),
+        recipes: Object.fromEntries(recipes.map(({ name }, index) => [name, index]))
     };
-    return out as DeepAsConst<typeof out>;
+
+    return { recipes, items, machines, nameToIds } as DeepAsConst<FactorioData>;
 }
 
-export type FactorioData = ReturnType<typeof initializeData>;
+
 type DeepAsConst<T> = T extends object ?
     T extends Set<infer T> ? ReadonlySet<DeepAsConst<T>>
     : T extends Map<infer K, infer V> ? ReadonlyMap<K, DeepAsConst<V>>
