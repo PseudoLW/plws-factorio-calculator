@@ -45,7 +45,7 @@ export function NewItemPrompt({ onNewEntry, addedItems }: NewItemPromptProps) {
       return; // Silently
     }
     const rate = Number(rateStr);
-    const id = data.itemIds.get(name);
+    const id = data.nameToIds.items[name];
     if (id === undefined) {
       error(`There is no item called '${name}'.`);
       return;
@@ -60,9 +60,7 @@ export function NewItemPrompt({ onNewEntry, addedItems }: NewItemPromptProps) {
       return;
     }
 
-    const hasRelevantRecipes = data.recipes.some(
-      (recipe) => recipe.products.some((product) => product.itemId === id)
-    );
+    const hasRelevantRecipes = data.items[id].recipesProducingThis.length > 0;
     if (!hasRelevantRecipes) {
       error(`There is no recipe that produces ${name}.`);
       return;
@@ -73,7 +71,7 @@ export function NewItemPrompt({ onNewEntry, addedItems }: NewItemPromptProps) {
   };
   return <div>
     <datalist id={itemListId}>
-      {data.itemNames.map(item => <option value={item} key={item} />)}
+      {data.items.map((item, id) => <option value={item.name} key={id} />)}
     </datalist>
 
     <label htmlFor={itemNameId}>Item name</label>

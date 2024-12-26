@@ -1,22 +1,22 @@
 
 type ItemBreakdownProps = {
   recipeConfigurations: {
-    recipeName: number;
-    machineName: number;
+    recipeName: string;
+    selectedMachineName: string;
     machineCount: number;
   }[];
   remainders: { 
-    itemName: number;
+    itemName: string;
     itemId: number;
     rate: number;
     availableRecipes: { name: string; id: number; }[];
   }[];
 };
 export function ItemBreakdown({ recipeConfigurations, remainders }: ItemBreakdownProps) {
-  return <>
+  return <> 
     <h2>Item breakdown</h2>
     <ul>
-      {recipeConfigurations.map(({ recipeName, machineName, machineCount }, i) => {
+      {recipeConfigurations.map(({ recipeName, selectedMachineName: machineName, machineCount }, i) => {
         return <li key={i}>
           <div>
             <strong>{recipeName}</strong> - {machineCount}x <strong>{machineName}</strong>

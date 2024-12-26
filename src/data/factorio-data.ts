@@ -15,7 +15,7 @@ type Energy = {
     type: 'food'; rate: number; item: ItemId;
 };
 
-type FactorioData = {
+type MutableFactorioData = {
     recipes: {
         name: string;
         ingredients: { item: ItemId, amount: number; }[];
@@ -37,8 +37,6 @@ type FactorioData = {
     }[];
     nameToIds: {
         items: Record<string, ItemId>;
-        machines: Record<string, MachineId>;
-        recipes: Record<string, RecipeId>;
     };
 };
 
@@ -86,15 +84,14 @@ export function initializeData() {
 
     const nameToIds = {
         items: itemIds,
-        machines: Object.fromEntries(machines.map(({ name }, index) => [name, index])),
-        recipes: Object.fromEntries(recipes.map(({ name }, index) => [name, index]))
     };
 
-    return { recipes, items, machines, nameToIds } as DeepAsConst<FactorioData>;
+    return { recipes, items, machines, nameToIds } as DeepAsConst<MutableFactorioData>;
 }
+export type FactorioData = DeepAsConst<MutableFactorioData>;
 
 
-type DeepAsConst<T> = T extends object ?
+export type DeepAsConst<T> = T extends object ?
     T extends Set<infer T> ? ReadonlySet<DeepAsConst<T>>
     : T extends Map<infer K, infer V> ? ReadonlyMap<K, DeepAsConst<V>>
     : T extends Array<infer T> ? ReadonlyArray<DeepAsConst<T>>
