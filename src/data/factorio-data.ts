@@ -40,15 +40,23 @@ type MutableFactorioData = {
     };
 };
 
+function toUniqueArray<T>(array: T[]) {
+    return Array.from(new Set(array));
+}
+
 type RawRecipeData = ((typeof rawData.recipes)[number] & { name?: string; });
 
 export function initializeData() {
-    const itemNames = rawData.recipes.flatMap(({ ingredients, products }) => [
+    const itemNames = toUniqueArray(rawData.recipes.flatMap(({ ingredients, products }) => [
         ...ingredients.map(({ item }) => item),
         ...products.map(({ item }) => item)
-    ]);
+    ]));
+
     const itemIds = createInverseMapping(itemNames);
-    const categories = rawData.factories.flatMap(({ category }) => category);
+    const categories = toUniqueArray([
+        rawData.factories.flatMap(({ category }) => category),
+        rawData.recipes.flatMap(({ category }) => category)
+    ].flat(1));
     const machineIds = createInverseMapping(rawData.factories.map(({ name }) => name));
     const machinesPerCategory = Object.fromEntries(
         categories.map(category => [category, rawData.factories
@@ -61,18 +69,20 @@ export function initializeData() {
         name: name ?? products[0].item,
         ingredients: ingredients.map(({ item, amount }) => ({ item: itemIds[item], amount })),
         products: products.map(({ item, amount }) => ({ item: itemIds[item], amount })),
-        machines: categories.flatMap(category => machinesPerCategory[category]),
+        machines: toUniqueArray(categories.flatMap(category => machinesPerCategory[category])),
         time,
         canTakeProductivityModules: false
     }));
+    const recipeIds = createInverseMapping(recipes.map(({ name }) => name));
     const items = itemNames.map((name, index) => ({
         name,
         recipesProducingThis: recipes
             .filter(({ products }) => products.some(({ item }) => item === index))
-            .map((_, index) => index),
+            .map(({ name }) => recipeIds[name]),
         recipesConsumingThis: recipes
             .filter(({ ingredients }) => ingredients.some(({ item }) => item === index))
-            .map((_, index) => index)
+            .map(({ name }) => recipeIds[name])
+
     }));
 
     const machines = rawData.factories.map(({ name, speed, energy, moduleSlots }) => ({
