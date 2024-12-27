@@ -33,36 +33,37 @@ function breakdownOutputToState(
     recipes: RecipeSelectionInternal[],
     data: FactorioData
 ): ItemBreakdownState {
-    const output = breakdownLinear(needed, recipes, data);
-    console.log(output)
+    const { items: Items, recipes: Recipes, machines: Machines } = data;
+    const { remaining, machinesNeeded } = breakdownLinear(needed, recipes, data);
+    const remainders = [...remaining.entries()].map(([itemId, rate]) => ({
+        itemName: Items[itemId].name,
+        itemId,
+        rate,
+        availableRecipes: Items[itemId].recipesProducingThis.map(
+            (recipeId) => ({ name: Recipes[recipeId].name, id: recipeId })
+
+        )
+    }));
+
     return {
         needed: needed.map(({ itemId, rate }) => ({
             itemName: data.items[itemId].name,
             itemId, rate
         })),
-        recipes: needed.map(({ itemId }) => {
-            const recipeId = data.items[itemId].recipesProducingThis[0];
-            const satisfyingItemId = data.recipes[recipeId].products[0].item;
-            const machineId = data.recipes[recipeId].machines[0];
+        recipes: recipes.map(({ recipeId, satisfyingItemId, selectedMachineId }, i) => {
             return {
-                recipeName: data.recipes[recipeId].name,
+                recipeName: Recipes[recipeId].name,
                 recipeId,
                 satisfyingItemId,
-                possibleMachineNames: data.recipes[recipeId].machines
-                    .map((machineId) => data.machines[machineId].name),
-                selectedMachineName: data.machines[machineId].name,
-                selectedMachineId: machineId,
-                machineCount: 0
+                possibleMachineNames: Recipes[recipeId].machines.map(
+                    (machineId) => Machines[machineId].name
+                ),
+                selectedMachineName: Machines[selectedMachineId].name,
+                selectedMachineId,
+                machineCount: machinesNeeded[i]
             };
         }),
-        remainders: [...output.remaining.entries()].map(([itemId, rate]) => ({
-            itemName: data.items[itemId].name,
-            itemId,
-            rate,
-            availableRecipes: data.items[itemId].recipesConsumingThis.map(
-                (recipeId) => ({ name: data.recipes[recipeId].name, id: recipeId })
-            )
-        }))
+        remainders
     };
 }
 export function addNewItem(

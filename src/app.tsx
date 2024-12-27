@@ -7,9 +7,6 @@ import { NeededItemList } from './components/needed-items';
 
 function App() {
   const data = useContext(FactorioDataContext);
-  useEffect(() => {
-    console.log(data)
-  }, [])
   const [state, setState] = useState<ItemBreakdownState>({
     needed: [],
     recipes: [],

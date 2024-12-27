@@ -44,5 +44,6 @@ export function breakdownLinear(
 
         machinesNeeded.push(machineNeeded);
     }
+
     return { machinesNeeded, remaining: currentNeeded };
 } 
