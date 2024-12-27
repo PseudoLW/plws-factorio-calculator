@@ -1,9 +1,9 @@
 import { render } from 'preact';
-import { useContext, useEffect, useState } from 'preact/hooks';
-import { FactorioDataContext } from './contexts/factorio-data';
-import { addNewItem, ItemBreakdownState } from './core/app-state';
+import { useContext, useState } from 'preact/hooks';
 import { ItemBreakdown } from './components/item-breakdown';
 import { NeededItemList } from './components/needed-items';
+import { FactorioDataContext } from './contexts/factorio-data';
+import { addNewItem, ItemBreakdownState, removeNeededItem } from './core/app-state';
 
 function App() {
   const data = useContext(FactorioDataContext);
@@ -19,10 +19,20 @@ function App() {
     }, data);
     setState(newState);
   };
-  const onDelete = () => { /* TODO */}
+  const onDelete = (itemId: number) => {
+    const newState = removeNeededItem(state, itemId, data);
+    setState(newState);
+  };
   return <>
-    <NeededItemList needed={state.needed} onNewEntry={onNewEntry} onDelete={onDelete} />
-    <ItemBreakdown recipeConfigurations={state.recipes} remainders={state.remainders} />
+    <NeededItemList
+      needed={state.needed}
+      onNewEntry={onNewEntry}
+      onDelete={onDelete}
+    />
+    <ItemBreakdown
+      recipeConfigurations={state.recipes}
+      remainders={state.remainders}
+    />
   </>;
 }
 

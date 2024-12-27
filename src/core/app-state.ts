@@ -43,26 +43,30 @@ function breakdownOutputToState(
             (recipeId) => ({ name: Recipes[recipeId].name, id: recipeId })
 
         )
-    }));
+    })).filter(({ rate }) => rate > 0);
+
+    const neededState = needed.map(({ itemId, rate }) => ({
+        itemName: data.items[itemId].name,
+        itemId, rate
+    })).filter(({ rate }) => rate > 0);
+
+    const recipesState = recipes.map(({ recipeId, satisfyingItemId, selectedMachineId }, i) => {
+        return {
+            recipeName: Recipes[recipeId].name,
+            recipeId,
+            satisfyingItemId,
+            possibleMachineNames: Recipes[recipeId].machines.map(
+                (machineId) => Machines[machineId].name
+            ),
+            selectedMachineName: Machines[selectedMachineId].name,
+            selectedMachineId,
+            machineCount: machinesNeeded[i]
+        };
+    }).filter(({ recipeId }) => Items[recipeId].recipesProducingThis.length > 0);
 
     return {
-        needed: needed.map(({ itemId, rate }) => ({
-            itemName: data.items[itemId].name,
-            itemId, rate
-        })),
-        recipes: recipes.map(({ recipeId, satisfyingItemId, selectedMachineId }, i) => {
-            return {
-                recipeName: Recipes[recipeId].name,
-                recipeId,
-                satisfyingItemId,
-                possibleMachineNames: Recipes[recipeId].machines.map(
-                    (machineId) => Machines[machineId].name
-                ),
-                selectedMachineName: Machines[selectedMachineId].name,
-                selectedMachineId,
-                machineCount: machinesNeeded[i]
-            };
-        }),
+        needed: neededState,
+        recipes: recipesState,
         remainders
     };
 }
@@ -79,6 +83,20 @@ export function addNewItem(
     }));
     return breakdownOutputToState(needed, recipes, data);
 };
+
+export function removeNeededItem(
+    oldState: ItemBreakdownState,
+    itemId: number,
+    data: FactorioData
+): ItemBreakdownState {
+    const needed = oldState.needed.filter(({ itemId: id }) => id !== itemId);
+    const recipes = oldState.recipes.map(({ recipeId, satisfyingItemId, selectedMachineId }) => ({
+        recipeId,
+        satisfyingItemId,
+        selectedMachineId
+    }));
+    return breakdownOutputToState(needed, recipes, data);
+}
 export function addNewBreakdown(
     oldState: ItemBreakdownState,
     brokenDownItem: { item: number; recipe: number; },
