@@ -1,5 +1,6 @@
 import { FactorioData } from "../data/factorio-data";
 
+const epsilon = 0.000_000_1;
 export function breakdownLinear(
     needed: { itemId: number; rate: number; }[],
     recipes: {
@@ -14,7 +15,7 @@ export function breakdownLinear(
     ));
     const machinesNeeded: number[] = [];
     for (const { recipeId, satisfyingItemId, selectedMachineId: machineId } of recipes) {
-        const satisfyingItemRate = currentNeeded.get(satisfyingItemId) ?? 0;
+        const neededItemRate = currentNeeded.get(satisfyingItemId) ?? 0;
         const {
             time: craftingTime,
             products, ingredients
@@ -22,11 +23,12 @@ export function breakdownLinear(
         const productCount = products.find((p) => p.item === satisfyingItemId)?.amount ?? 1;
 
         const craftingSpeed = data.machines[machineId].speed;
-        const machineNeeded = (satisfyingItemRate * craftingTime) / (craftingSpeed.base * productCount * 60);
-        const epsilon = 0.0000001;
+        const craftsPerMinute = (neededItemRate * craftingTime) / productCount;
+        const machineNeeded = craftsPerMinute / (craftingSpeed.base * 60);
+
         for (const { item, amount } of products) {
             const prevRate = currentNeeded.get(item) ?? 0;
-            const newRate = prevRate - (60 * amount) / (satisfyingItemRate * craftingTime);
+            const newRate = prevRate - amount * craftsPerMinute;
             currentNeeded.set(
                 item,
                 Math.abs(newRate) < epsilon ? 0 : newRate
@@ -35,13 +37,12 @@ export function breakdownLinear(
 
         for (const { item, amount } of ingredients) {
             const prevRate = currentNeeded.get(item) ?? 0;
-            const newRate = prevRate + (60 * amount) / (satisfyingItemRate * craftingTime);
+            const newRate = prevRate + amount * craftsPerMinute;
             currentNeeded.set(
                 item,
                 Math.abs(newRate) < epsilon ? 0 : newRate
             );
         }
-
         machinesNeeded.push(machineNeeded);
     }
 

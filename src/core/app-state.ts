@@ -41,7 +41,6 @@ function breakdownOutputToState(
         rate,
         availableRecipes: Items[itemId].recipesProducingThis.map(
             (recipeId) => ({ name: Recipes[recipeId].name, id: recipeId })
-
         )
     })).filter(({ rate }) => rate > 0);
 
@@ -62,7 +61,10 @@ function breakdownOutputToState(
             selectedMachineId,
             machineCount: machinesNeeded[i]
         };
-    }).filter(({ recipeId }) => Items[recipeId].recipesProducingThis.length > 0);
+    }).filter(({ recipeId, machineCount }) => 
+        Items[recipeId].recipesProducingThis.length > 0 &&
+        machineCount > 0
+    );
 
     return {
         needed: neededState,
