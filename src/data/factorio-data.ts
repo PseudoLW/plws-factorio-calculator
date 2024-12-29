@@ -23,17 +23,20 @@ type MutableFactorioData = {
         machines: MachineId[];
         time: number;
         canTakeProductivityModules: boolean; // All false for now
+        id: number;
     }[];
     items: {
         name: string;
         recipesProducingThis: RecipeId[];
         recipesConsumingThis: RecipeId[];
+        id: number;
     }[];
     machines: {
         name: string;
         speed: { base: number; perQuality: number; };
         energy: Energy;
         moduleSlots: number;
+        id: number;
     }[];
     nameToIds: {
         items: Record<string, ItemId>;
@@ -71,7 +74,8 @@ export function initializeData() {
         products: products.map(({ item, amount }) => ({ item: itemIds[item], amount })),
         machines: toUniqueArray(categories.flatMap(category => machinesPerCategory[category])),
         time,
-        canTakeProductivityModules: false
+        canTakeProductivityModules: false,
+        id: index
     }));
     const recipeIds = createInverseMapping(recipes.map(({ name }) => name));
     const items = itemNames.map((name, index) => ({
@@ -81,15 +85,16 @@ export function initializeData() {
             .map(({ name }) => recipeIds[name]),
         recipesConsumingThis: recipes
             .filter(({ ingredients }) => ingredients.some(({ item }) => item === index))
-            .map(({ name }) => recipeIds[name])
-
+            .map(({ name }) => recipeIds[name]),
+        id: index
     }));
 
-    const machines = rawData.factories.map(({ name, speed, energy, moduleSlots }) => ({
+    const machines = rawData.factories.map(({ name, speed, energy, moduleSlots }, index) => ({
         name,
         speed,
         energy,
-        moduleSlots
+        moduleSlots,
+        id: index
     }));
 
     const nameToIds = {

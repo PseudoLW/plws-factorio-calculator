@@ -15,7 +15,7 @@ function StatusMessage({ message, changeFactor }: StatusMessageProps) {
     return () => clearTimeout(timer);
   }, [changeFactor]);
 
-  return <div>{displayedMessage}</div>;
+  return <td colspan={3}>{displayedMessage}</td>;
 };
 
 export type NewItemPromptProps = {
@@ -69,22 +69,31 @@ export function NewItemPrompt({ onNewEntry, addedItems }: NewItemPromptProps) {
     rateFieldRef.current.value = '';
     onNewEntry(id, rate);
   };
-  return <div>
-    <datalist id={itemListId}>
-      {data.items.map((item, id) => <option value={item.name} key={id} />)}
-    </datalist>
+  return <>
+    <tr>
+      <datalist id={itemListId}>{
+        data.items
+          .filter(({ id }) => (!addedItems.has(id)))
+          .map((item) => <option value={item.name} key={item.id} />)
+      }</datalist>
 
-    <label htmlFor={itemNameId}>Item name</label>
-    <input
-      id={itemNameId} ref={nameFieldRef}
-      type="text" list={itemListId} />
-    <label htmlFor={itemRateId}>Item rate</label>
+      <td>
+        <input
+          id={itemNameId} ref={nameFieldRef}
+          type="text" list={itemListId} />
+      </td>
+      <td>
+        <input
+          id={itemRateId} ref={rateFieldRef}
+          type="text" />
+      </td>
 
-    <input
-      id={itemRateId} ref={rateFieldRef}
-      type="text" />
-
-    <button onClick={onClickHandler}>Add item</button>
-    <StatusMessage message={statusMessage} changeFactor={changeFactor} />
-  </div>;
+      <td>
+        <button onClick={onClickHandler}>Add new item</button>
+      </td>
+    </tr>
+    <tr>
+      <StatusMessage message={statusMessage} changeFactor={changeFactor} />
+    </tr>
+  </>;
 }

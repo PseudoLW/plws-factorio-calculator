@@ -1,7 +1,7 @@
 import { useContext } from "preact/hooks";
 import { FactorioDataContext } from "../contexts/factorio-data";
+import { ItemAndRateInternal } from "../core/app-state";
 import { NewItemPrompt } from "./new-item-box";
-import { ItemAndRateInternal, ItemAndRateView } from "../core/app-state";
 
 type NeededItemEntryProps = {
   itemId: number;
@@ -11,13 +11,13 @@ type NeededItemEntryProps = {
 function NeededItemEntry({ itemId, rate, onDelete }: NeededItemEntryProps) {
   const { items } = useContext(FactorioDataContext);
 
-  return <li>
-    <div>
-      <strong>{items[itemId].name}</strong> {rate} items/min
-    </div>
-    <button>Set rate</button>
-    <button onClick={() => onDelete(itemId)}>Delete</button>
-  </li>;
+  return <tr>
+    <td><strong>{items[itemId].name}</strong></td>
+    <td>{rate}</td>
+    <td>
+      <button onClick={() => onDelete(itemId)}>Delete</button>
+    </td>
+  </tr>;
 }
 
 type NeededItemListProps = {
@@ -27,11 +27,19 @@ type NeededItemListProps = {
 };
 export function NeededItemList({ needed, onNewEntry, onDelete }: NeededItemListProps) {
   const addedItems = new Set(needed.map(s => s.itemId)) as ReadonlySet<number>;
-  return <>
-    <h3>Needed items</h3>
-    <NewItemPrompt {...{ onNewEntry, addedItems }} />
-    <ul>
+  return <table>
+    <thead>
+      <tr>
+        <th>Needed item</th>
+        <th>Rate (items/min)</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
       {needed.map((item) => <NeededItemEntry key={item.itemId} onDelete={onDelete} {...item} />)}
-    </ul>
-  </>;
+    </tbody>
+    <tfoot>
+      <NewItemPrompt {...{ onNewEntry, addedItems }} />
+    </tfoot>
+  </table >;
 }
