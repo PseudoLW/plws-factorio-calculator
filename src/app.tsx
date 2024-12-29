@@ -32,6 +32,7 @@ function App() {
     <ItemBreakdown
       recipeConfigurations={state.recipes}
       remainders={state.remainders}
+      onBreakdown={(a, b) => console.log(a, data.recipes[b].name)}
     />
   </>;
 }
