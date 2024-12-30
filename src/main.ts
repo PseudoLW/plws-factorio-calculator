@@ -1,4 +1,4 @@
-import { runApp } from "./app";
+import { runApp } from "./frontend/app";
 
 function main() {
   runApp();

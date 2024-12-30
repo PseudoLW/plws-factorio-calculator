@@ -3,7 +3,7 @@ import { useContext, useState } from 'preact/hooks';
 import { ItemBreakdown } from './components/item-breakdown';
 import { NeededItemList } from './components/needed-items';
 import { FactorioDataContext } from './contexts/factorio-data';
-import { addNewBreakdown, addNewItem, ItemBreakdownState, removeNeededItem } from './core/app-state';
+import { addNewBreakdown, addNewItem, ItemBreakdownState, removeNeededItem } from '../backend/core/app-state';
 
 function App() {
   const data = useContext(FactorioDataContext);
@@ -24,7 +24,9 @@ function App() {
     setState(newState);
   };
   const onBreakdown = (item: number, recipe: number) => {
+    console.log(item, recipe);
     const newState = addNewBreakdown(state, { item, recipe }, data);
+    console.log(newState);
     setState(newState);
   };
   return <>

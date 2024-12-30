@@ -1,5 +1,5 @@
-import { useState } from "preact/hooks";
-import { EntryOf } from "../types";
+import { useEffect, useState } from "preact/hooks";
+import { EntryOf } from "../../util/types";
 
 type ItemBreakdownProps = {
   recipeConfigurations: {
@@ -25,7 +25,7 @@ export function ItemBreakdown({
     <h2>Item breakdown</h2>
     <ul>
       {recipeConfigurations.map(({ recipeName, selectedMachineName: machineName, machineCount }, i) => {
-        return <li key={i}>
+        return <li>
           <div>
             <strong>{recipeName}</strong> - {machineCount}x <strong>{machineName}</strong>
             <button onClick={() => {/* TODO */ }}>Delete</button>
@@ -33,8 +33,9 @@ export function ItemBreakdown({
           </div>
         </li>;
       })}
+      <hr />
       {remainders.map((props, i) => {
-        return <ItemBreakdownEntry {...props} onBreakdown={onBreakdown}/>
+        return <ItemBreakdownEntry {...props} onBreakdown={onBreakdown} />;
       })}
     </ul>
   </>;
@@ -53,7 +54,10 @@ function ItemBreakdownEntry({
   onBreakdown
 }: ItemBreakdownEntryProps) {
   const [selectedRecipe, setSelectedRecipe] = useState(availableRecipes[0].id);
-
+  useEffect(() => {
+    console.log('wawa');
+    console.log(itemName, availableRecipes);
+  });
   return <li>
     <div>
       <strong>{itemName}</strong> {rate} items/min

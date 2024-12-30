@@ -101,7 +101,11 @@ export function initializeData() {
         items: itemIds,
     };
 
-    return { recipes, items, machines, nameToIds } as DeepAsConst<MutableFactorioData>;
+    const out = {
+        recipes, items, machines, nameToIds
+    } as DeepAsConst<MutableFactorioData>;
+    console.log(out);
+    return out;
 }
 export type FactorioData = DeepAsConst<MutableFactorioData>;
 

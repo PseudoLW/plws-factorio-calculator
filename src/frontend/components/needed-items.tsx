@@ -1,6 +1,6 @@
 import { useContext } from "preact/hooks";
 import { FactorioDataContext } from "../contexts/factorio-data";
-import { ItemAndRateInternal } from "../core/app-state";
+import { ItemAndRateInternal } from "../../backend/core/app-state";
 import { NewItemPrompt } from "./new-item-box";
 
 type NeededItemEntryProps = {
