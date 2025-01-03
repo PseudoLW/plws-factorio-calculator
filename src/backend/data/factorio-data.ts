@@ -1,11 +1,11 @@
 import rawData from './data.json';
 
-function createInverseMapping<T extends string | number>(mapping: T[]) {
-    return Object.fromEntries(mapping.map((entry, index) => [entry, index])) as Record<T, number>;
+function createInverseMapping<OutType = number, T extends string | number = string>(mapping: T[]) {
+    return Object.fromEntries(mapping.map((entry, index) => [entry, index])) as Record<T, OutType>;
 }
-export type ItemId = number;
-export type MachineId = number;
-export type RecipeId = number;
+export type ItemId = number & { readonly __id_of: 'Item'; };
+export type MachineId = number & { readonly __id_of: 'Machine'; };;
+export type RecipeId = number & { readonly __id_of: 'Recipe'; };;
 
 type Energy = {
     type: 'burner'; cost: number;
@@ -16,7 +16,7 @@ type Energy = {
 };
 
 type MutableFactorioData = {
-    recipes: {
+    recipes: { [id in RecipeId]: {
         name: string;
         ingredients: { item: ItemId, amount: number; }[];
         products: { item: ItemId, amount: number; }[];
@@ -24,20 +24,20 @@ type MutableFactorioData = {
         time: number;
         canTakeProductivityModules: boolean; // All false for now
         id: number;
-    }[];
-    items: {
+    } };
+    items: { [id in ItemId]: {
         name: string;
         recipesProducingThis: RecipeId[];
         recipesConsumingThis: RecipeId[];
         id: number;
-    }[];
-    machines: {
+    } };
+    machines: { [id in MachineId]: {
         name: string;
         speed: { base: number; perQuality: number; };
         energy: Energy;
         moduleSlots: number;
         id: number;
-    }[];
+    } };
     nameToIds: {
         items: Record<string, ItemId>;
     };
@@ -55,12 +55,12 @@ export function initializeData() {
         ...products.map(({ item }) => item)
     ]));
 
-    const itemIds = createInverseMapping(itemNames);
+    const itemIds = createInverseMapping<ItemId>(itemNames);
     const categories = toUniqueArray([
         rawData.factories.flatMap(({ category }) => category),
         rawData.recipes.flatMap(({ category }) => category)
     ].flat(1));
-    const machineIds = createInverseMapping(rawData.factories.map(({ name }) => name));
+    const machineIds = createInverseMapping<MachineId>(rawData.factories.map(({ name }) => name));
     const machinesPerCategory = Object.fromEntries(
         categories.map(category => [category, rawData.factories
             .filter(({ category: cat }) => cat.includes(category))
@@ -75,9 +75,10 @@ export function initializeData() {
         machines: toUniqueArray(categories.flatMap(category => machinesPerCategory[category])),
         time,
         canTakeProductivityModules: false,
-        id: index
+        id: index as RecipeId
     }));
-    const recipeIds = createInverseMapping(recipes.map(({ name }) => name));
+    const recipeIds = createInverseMapping<RecipeId>(recipes.map(({ name }) => name));
+
     const items = itemNames.map((name, index) => ({
         name,
         recipesProducingThis: recipes
@@ -86,7 +87,7 @@ export function initializeData() {
         recipesConsumingThis: recipes
             .filter(({ ingredients }) => ingredients.some(({ item }) => item === index))
             .map(({ name }) => recipeIds[name]),
-        id: index
+        id: index as ItemId
     }));
 
     const machines = rawData.factories.map(({ name, speed, energy, moduleSlots }, index) => ({
@@ -94,7 +95,7 @@ export function initializeData() {
         speed,
         energy,
         moduleSlots,
-        id: index
+        id: index as MachineId
     }));
 
     const nameToIds = {
@@ -110,7 +111,8 @@ export function initializeData() {
 export type FactorioData = DeepAsConst<MutableFactorioData>;
 
 
-export type DeepAsConst<T> = T extends object ?
+export type DeepAsConst<T> = T extends number ? T : // Account for branded type
+    T extends object ?
     T extends Set<infer T> ? ReadonlySet<DeepAsConst<T>>
     : T extends Map<infer K, infer V> ? ReadonlyMap<K, DeepAsConst<V>>
     : T extends Array<infer T> ? ReadonlyArray<DeepAsConst<T>>

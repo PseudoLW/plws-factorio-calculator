@@ -1,48 +1,51 @@
 import { render } from 'preact';
 import { useContext, useState } from 'preact/hooks';
+import { AppController } from '../controller/controller';
 import { ItemBreakdown } from './components/item-breakdown';
 import { NeededItemList } from './components/needed-items';
-import { FactorioDataContext } from './contexts/factorio-data';
-import { addNewBreakdown, addNewItem, ItemBreakdownState, removeNeededItem } from '../backend/core/app-state';
+import { AppControllerContext } from './contexts/controller';
 
 function App() {
-  const data = useContext(FactorioDataContext);
-  const [state, setState] = useState<ItemBreakdownState>({
-    needed: [],
-    recipes: [],
-    remainders: []
-  });
-  const onNewEntry = (itemId: number, rate: number) => {
-    const newState = addNewItem(state, {
-      itemId,
-      rate
-    }, data);
-    setState(newState);
+  const controller = useContext(AppControllerContext);
+  const [neededItems, setNeededItems] = useState(
+    controller.getNeededItems()
+  );
+  const [breakdownRecipes, setBreakdownRecipes] = useState(
+    controller.getBreakdownRecipes()
+  );
+  const onNewEntry = (itemName: string, rate: number) => {
+    controller.addNewNeededItem(itemName, rate);
+    setNeededItems(controller.getNeededItems());
+    setBreakdownRecipes(controller.getBreakdownRecipes());
   };
   const onDeleteNeededItem = (itemId: number) => {
-    const newState = removeNeededItem(state, itemId, data);
-    setState(newState);
+    controller.deleteNeededItem(itemId);
+    setNeededItems(controller.getNeededItems());
+    setBreakdownRecipes(controller.getBreakdownRecipes());
   };
   const onBreakdown = (item: number, recipe: number) => {
-    console.log(item, recipe);
-    const newState = addNewBreakdown(state, { item, recipe }, data);
-    console.log(newState);
-    setState(newState);
+    controller.addNewBreakdown(item, recipe);
+    setBreakdownRecipes(controller.getBreakdownRecipes());
   };
   return <>
     <NeededItemList
-      needed={state.needed}
+      needed={neededItems.items}
+      itemList={neededItems.itemList}
       onNewEntry={onNewEntry}
       onDelete={onDeleteNeededItem}
     />
     <ItemBreakdown
-      recipeConfigurations={state.recipes}
-      remainders={state.remainders}
+      recipeConfigurations={breakdownRecipes.breakdown}
+      remainders={breakdownRecipes.remainder}
       onBreakdown={onBreakdown}
     />
   </>;
 }
 
-export function runApp() {
-  render(<App />, document.body);
+export function runApp(controller: AppController) {
+  render(
+    <AppControllerContext.Provider value={controller}>
+      <App />
+    </AppControllerContext.Provider>
+    , document.body);
 };

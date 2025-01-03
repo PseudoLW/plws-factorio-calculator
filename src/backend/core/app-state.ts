@@ -1,6 +1,6 @@
 import { FactorioData } from "../data/factorio-data";
 import { breakdownLinear } from "./calculator";
-
+// TODO: delete
 export type ItemAndRateInternal = {
     itemId: number;
     rate: number;

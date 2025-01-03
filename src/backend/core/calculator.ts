@@ -1,16 +1,16 @@
-import { FactorioData } from "../data/factorio-data";
+import { FactorioData, ItemId, MachineId, RecipeId } from "../data/factorio-data";
 
 const epsilon = 0.000_000_1;
 export function breakdownLinear(
-    needed: { itemId: number; rate: number; }[],
+    needed: { itemId: ItemId; rate: number; }[],
     recipes: {
-        recipeId: number;
-        satisfyingItemId: number;
-        selectedMachineId: number;
+        recipeId: RecipeId;
+        satisfyingItemId: ItemId;
+        selectedMachineId: MachineId;
     }[],
     data: FactorioData
 ) {
-    const currentNeeded = new Map<number, number>(needed.map(
+    const currentNeeded = new Map<ItemId, number>(needed.map(
         ({ itemId, rate }) => [itemId, rate]
     ));
     const machinesNeeded: number[] = [];

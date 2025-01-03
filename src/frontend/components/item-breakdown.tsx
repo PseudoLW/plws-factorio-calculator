@@ -3,13 +3,12 @@ import { EntryOf } from "../../util/types";
 
 type ItemBreakdownProps = {
   recipeConfigurations: {
-    recipeName: string;
-    selectedMachineName: string;
+    recipe: string;
+    selectedMachine: string;
     machineCount: number;
   }[];
   remainders: {
-    itemName: string;
-    itemId: number;
+    item: { name: string; id: number; };
     rate: number;
     availableRecipes: { name: string; id: number; }[];
   }[];
@@ -24,10 +23,10 @@ export function ItemBreakdown({
   return <>
     <h2>Item breakdown</h2>
     <ul>
-      {recipeConfigurations.map(({ recipeName, selectedMachineName: machineName, machineCount }, i) => {
+      {recipeConfigurations.map(({ recipe, selectedMachine, machineCount }) => {
         return <li>
           <div>
-            <strong>{recipeName}</strong> - {machineCount}x <strong>{machineName}</strong>
+            <strong>{recipe}</strong> - {machineCount}x <strong>{selectedMachine}</strong>
             <button onClick={() => {/* TODO */ }}>Delete</button>
             <button onClick={() => {/* TODO */ }}>Move order</button>
           </div>
@@ -47,20 +46,16 @@ type ItemBreakdownEntryProps = EntryOf<ItemBreakdownProps['remainders']> & {
 };
 
 function ItemBreakdownEntry({
-  itemName,
-  itemId,
+  item: { name, id },
   rate,
   availableRecipes,
   onBreakdown
 }: ItemBreakdownEntryProps) {
   const [selectedRecipe, setSelectedRecipe] = useState(availableRecipes[0].id);
-  useEffect(() => {
-    console.log('wawa');
-    console.log(itemName, availableRecipes);
-  });
+
   return <li>
     <div>
-      <strong>{itemName}</strong> {rate} items/min
+      <strong>{name}</strong> {rate} items/min
       {availableRecipes.length > 1 && (
         <select
           onChange={(ev) => setSelectedRecipe(Number((ev.target as HTMLSelectElement).value))}
@@ -72,7 +67,7 @@ function ItemBreakdownEntry({
         </select>
       )}
       {availableRecipes.length > 0 && (
-        <button onClick={() => onBreakdown(itemId, selectedRecipe)}>Break down</button>
+        <button onClick={() => onBreakdown(id, selectedRecipe)}>Break down</button>
       )}
     </div>
   </li>;

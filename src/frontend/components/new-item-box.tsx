@@ -1,5 +1,5 @@
 import { useContext, useEffect, useId, useRef, useState } from "preact/hooks";
-import { FactorioDataContext } from "../contexts/factorio-data";
+import { AppControllerContext } from "../contexts/controller";
 
 type StatusMessageProps = {
   message: string;
@@ -19,12 +19,11 @@ function StatusMessage({ message, changeFactor }: StatusMessageProps) {
 };
 
 export type NewItemPromptProps = {
-  onNewEntry: (itemId: number, rate: number) => void;
-  addedItems: ReadonlySet<number>;
+  onNewEntry: (itemName: string, rate: number) => void;
+  itemList: string[];
 };
-export function NewItemPrompt({ onNewEntry, addedItems }: NewItemPromptProps) {
-  const data = useContext(FactorioDataContext);
-
+export function NewItemPrompt({ onNewEntry, itemList }: NewItemPromptProps) {
+  const controller = useContext(AppControllerContext);
   const itemNameId = useId();
   const itemRateId = useId();
   const itemListId = useId();
@@ -40,13 +39,14 @@ export function NewItemPrompt({ onNewEntry, addedItems }: NewItemPromptProps) {
   };
   const onClickHandler = () => {
     const rateStr = rateFieldRef.current.value;
-    const name = nameFieldRef.current.value;
+    const name = nameFieldRef.current.value.toLowerCase().trim();
+    console.log(nameFieldRef.current.value)
     if (name === '' || rateStr === '') {
       return; // Silently
     }
     const rate = Number(rateStr);
-    const id = data.nameToIds.items[name];
-    if (id === undefined) {
+    const itemAvailability = controller.checkNeededItemAvailability(name);
+    if (itemAvailability === 'illegal') {
       error(`There is no item called '${name}'.`);
       return;
     }
@@ -55,27 +55,23 @@ export function NewItemPrompt({ onNewEntry, addedItems }: NewItemPromptProps) {
       error(`The rate must be a real positive number.`);
       return;
     }
-    if (addedItems.has(id)) {
+    if (itemAvailability === 'used') {
       error(`The item ${name} is already added to the batch.`);
       return;
     }
-
-    const hasRelevantRecipes = data.items[id].recipesProducingThis.length > 0;
-    if (!hasRelevantRecipes) {
+    if (itemAvailability === 'noRecipe') {
       error(`There is no recipe that produces ${name}.`);
       return;
     }
     nameFieldRef.current.value = '';
     rateFieldRef.current.value = '';
-    onNewEntry(id, rate);
+    onNewEntry(name, rate);
   };
   return <>
     <tr>
-      <datalist id={itemListId}>{
-        data.items
-          .filter(({ id }) => (!addedItems.has(id)))
-          .map((item) => <option value={item.name} key={item.id} />)
-      }</datalist>
+      <datalist id={itemListId}>
+        {itemList.map((name) => <option value={name} key={name} />)}
+      </datalist>
 
       <td>
         <input
